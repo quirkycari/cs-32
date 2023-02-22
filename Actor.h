@@ -11,7 +11,9 @@ class StudentWorld;
 //actor - derived from GraphObject
 class Actor: public GraphObject{
     public:
+        Actor(StudentWorld* world, int imageID, int startX, int startY, int dir, int depth, double size): GraphObject(imageID, startX, startY, dir, depth, size), m_world(world) {};
     private:
+        StudentWorld* m_world;
 };
 
 //players - peach & yoshi
