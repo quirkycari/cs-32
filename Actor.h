@@ -1,172 +1,170 @@
-#ifndef ACTOR_H_
-#define ACTOR_H_
+#include "Actor.h"
+#include "GameController.h"
+#include "StudentWorld.h"
+#include "Board.h"
+// Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
-#include "GraphObject.h"
 
-// Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
+//helper function to reset direction if goes over
+void Player_Avatar::resetDir(int walkDir){
+    if(getWalkDir()== 450){
+        setWalkDir(up);
+    }
+    if(getWalkDir()== 360){
+        setWalkDir(right);
+    }
+    if(getWalkDir()== 540){
+        setWalkDir(left);
+    }
+}
 
-class StudentWorld;
+//helper function square
 
-//enumeration for roll states
-enum roll_or_walk{WAITING_TO_ROLL = 0, WALKING = 1};
+bool Player_Avatar::checkForSquare(int walkDir){
+    int newX;
+    int newY;
 
-//player id
-enum playerNum{PEACH = 1, YOSHI = 2};
+    getPositionInThisDirection(getWalkDir(), 16, newX, newY);
+    
+    newX = newX / SPRITE_WIDTH;
+    newY = newY / SPRITE_HEIGHT;
 
-//actor - derived from GraphObject
-class Actor: public GraphObject{
-    public:
-        //constructor
-        Actor(StudentWorld* world, int imageID, int startX, int startY, int dir, int depth, double size): GraphObject(imageID, startX, startY, dir, depth, size), m_world(world) {};
-        StudentWorld* getWorld() {
-            return m_world;
+    Board::GridEntry ge = getWorld()->getBoard()->getContentsOf(newX,newY);
+    
+    if(ge == Board::empty){
+        
+        cout << getWalkDir() << endl;
+        
+        cout << "not blue coin square" << endl;
+        return false;
+    }
+    
+    if(ge != Board::empty){
+        cout << "final dir: " << getWalkDir() << endl;
+        
+        //can move forward in this direction
+        return true;
+    }
+    
+
+    
+    return false;
+    
+    
+
+}
+
+//can move
+
+bool Player_Avatar::canMove(int walkDir){
+    vector<int> visitedDirections;
+    
+    if(checkForSquare(walkDir)){
+        return true;
+    }
+    
+    else{
+        
+        setWalkDir(getWalkDir()+90);
+        resetDir(walkDir);
+
+        
+        if(checkForSquare(getWalkDir())){
+            return true;
         }
         
-    virtual void doSomething() = 0;
-    
-    private:
-        StudentWorld* m_world;
-};
+        else{
+            setWalkDir(getWalkDir()+180);
+            resetDir(walkDir);
 
-//players - peach & yoshi
-//sprite direction is direction that player faces
-//starting direction is 0 = right
-class Player_Avatar: public Actor{
-    public:
-        //constructor
-        Player_Avatar(StudentWorld* world, int imageID, int startX, int startY, double size): Actor(world, imageID, startX, startY, 0, 0, 1), coins(0), state(WAITING_TO_ROLL) {};
+        }
+    }
+    
+    return false;
+}
+
+
+
+//player avatar doSomething
+
+void Player_Avatar::doSomething(){
+    int ch;
+    
+    //if player is in waiting to roll state
+    if(getState() == WAITING_TO_ROLL){
+        cout << "coins: " << getCoins() << endl;
+        //only working for PEACH rn
+        //nvm maybe
+        ch = getWorld()->getAction(getPlayerNum());
+      //  cout << ch;
+            switch(ch){
+                case ACTION_ROLL: {
+                    setDieRoll((rand() % 10) + 1);
+                    setTicks(getDieRoll()*8);
+                    
+                    setState(WALKING);
+                    break;
+                }
+                default: {
+                    return;
+                    break;
+                }
+            }
+        }
+    
+    if(getState() == WALKING){
         
-        //doSomething
-        virtual void doSomething();
-    
-        //getter and setter for coins
-        int getCoins(){return coins;};
-        void setCoins(int newCoins){coins = newCoins;};
-    
-        //getter and setter for walking direction
-        int getWalkDir(){return walkDir;};
-        void setWalkDir(int newDir){walkDir = newDir;};
-    
-        //getter and setter for state
-        int getState(){return state;};
-        void setState(int newState){state = newState;};
-    
-        //die roll
-        int getDieRoll(){return die_roll;};
-        void setDieRoll(int newRoll){die_roll = newRoll;};
-    
-        //ticks_to_move
-        int getTicks(){return ticks_to_move;};
-        void setTicks(int newTicks){ticks_to_move = newTicks;};
-    
-        //check for square in front
-        bool checkForSquare(int walkDir);
-    
-        //check for ability to move
-        bool canMove(int walkDir);
-    
-        //reset direction
-        void resetDir(int walkDir);
         
-        //virtual getter
-        virtual int getPlayerNum() = 0;
+        if(getX() % 16 == 0 && getY() %16 == 0){
+            canMove(getWalkDir());
+        }
         
-    private:
-        int state;
-        int walkDir = right;
-        int die_roll = 0;
-        int ticks_to_move = 0;
-        int coins;
-};
+        //if walkDir = left, change sprite dir to 180
 
-//Peach
-
-//assume peach is player 1, use left side of keyboard --> wasd to move
-class Peach: public Player_Avatar{
-    public:
-    Peach(StudentWorld* world, int startX, int startY): Player_Avatar(world, IID_PEACH, SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 1),coins(0), grantedForThisTurn(false){};
-       // virtual void doSomething();
+        if(getWalkDir()==left){
+            setDirection(left);
+        }
+        else{
+            setDirection(right);
+        }
         
-        virtual int getPlayerNum() {return playerNum;};
-    
-        bool granted(){return grantedForThisTurn;};
-        void setGranted(bool newGrant){grantedForThisTurn = newGrant;};
-
-    private:
-        bool grantedForThisTurn;
-        int coins;
-        const int playerNum = PEACH;
+        //move 2 pixels in walk direction
+        moveAtAngle(getWalkDir(), 2);
         
-};
+            
+        //decrement ticks_to_move by 1
+        setTicks(getTicks() - 1);
+                
+        //if ticks_to_move = 0, change state to walking
+        if(getTicks() == 0){
+            setState(WAITING_TO_ROLL);
+            cout << "break";
+        }
+}
+}
 
-//Yoshi
-class Yoshi: public Player_Avatar{
+void blueCoinSquare::doSomething(){
     
-};
-
-//baddies - boo & bowser
-class Baddies: public Actor{
+    if(!isAlive()){
+        return;
+    }
     
-};
+    else{
+        //check if avatar is in waiting to roll state on square
+        if(getWorld()->overlappingPeach(this)){
+            if(getWorld()->getPeach()->getState()==WAITING_TO_ROLL && getWorld()->getPeach()->granted()){
+                grantCoins(getWorld()->getPeach());
+                getWorld()->getPeach()->setGranted(false);
+            }
+            else if(getWorld()->getPeach()->getState()==WALKING){
+                getWorld()->getPeach()->setGranted(true);
+            }
+        }
 
-//Boo
-class Boo: public Baddies{
-    
-};
-
-//Bowser
-class Bowser: public Baddies{
-    
-};
-
-//squares - coin square, star square, directional square, bank square, event square, dropping square
-class Square: public Actor{
-    public:
-        Square(StudentWorld* world, int imageID, int startX, int startY, int dir, double size): Actor(world, imageID, startX, startY, dir, 1, 1) {};
-    private:
-};
-
-//coin squares
-
-//do i need separate classes for blue and red coin squares???
-
-class blueCoinSquare: public Square{
-    public:
-        blueCoinSquare(StudentWorld* world, int startX, int startY): Square(world,IID_BLUE_COIN_SQUARE,SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 0, 1), alive(true){};
-        virtual void doSomething();
         
-        bool isAlive(){return alive;};
-        void grantCoins(Player_Avatar* avatar){avatar->setCoins(avatar->getCoins() + 3);};
-    private:
-        bool alive;
-};
-
-//star square
-class starSquare: public Square{
+    }
     
-};
-
-//directional square
-class directionalSquare: public Square{
     
-};
-
-//bank square
-class bankSquare: public Square{
     
-};
-
-//event square
-class eventSquare: public Square{
-    
-};
-
-//dropping square
-class droppingSquare: public Square{
-    
-};
-
-
-//split it up into players (Peach & Yoshi), baddies (Boo & Bowser), squares, and vortex
-
-#endif // ACTOR_H_
+    //dummy function
+}
