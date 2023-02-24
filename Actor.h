@@ -8,22 +8,70 @@
 class StudentWorld;
 
 
+//enumeration for roll states
+enum roll_or_walk{WAITING_TO_ROLL = 0, WALKING = 1};
+
 //actor - derived from GraphObject
 class Actor: public GraphObject{
     public:
+        //constructor
         Actor(StudentWorld* world, int imageID, int startX, int startY, int dir, int depth, double size): GraphObject(imageID, startX, startY, dir, depth, size), m_world(world) {};
+        StudentWorld* getWorld() {
+            return m_world;
+        }
+    
     private:
         StudentWorld* m_world;
 };
 
 //players - peach & yoshi
+//sprite direction is direction that player faces
+//starting direction is 0 = right
 class Player_Avatar: public Actor{
+    public:
+        //constructor
+        Player_Avatar(StudentWorld* world, int imageID, int startX, int startY, double size): Actor(world, imageID, startX, startY, 0, 0, 1), coins(0), state(WAITING_TO_ROLL) {};
+        
+        //doSomething
+        virtual void doSomething() = 0;
     
+        //getter and setter for coins
+        int getCoins(){return coins;};
+        void setCoins(int newCoins){coins = newCoins;};
+    
+        //getter and setter for walking direction
+        int getWalkDir(){return walkDir;};
+        void setWalkDir(int newDir){walkDir = newDir;};
+    
+        //getter and setter for state
+        int getState(){return state;};
+        void setState(int newState){state = newState;};
+    
+        //die roll
+        int getDieRoll(){return die_roll;};
+        void setDieRoll(int newRoll){die_roll = newRoll;};
+    
+        //ticks_to_move
+        int getTicks(){return ticks_to_move;};
+        void setTicks(int newTicks){ticks_to_move = newTicks;};
+    
+    private:
+        int state;
+        int walkDir = right;
+        int die_roll = 0;
+        int ticks_to_move = 0;
+        int coins;
 };
 
 //Peach
+
+//assume peach is player 1, use left side of keyboard --> wasd to move
 class Peach: public Player_Avatar{
-    
+    public:
+        Peach(StudentWorld* world, int startX, int startY): Player_Avatar(world, IID_PEACH, SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 1) {};
+        virtual void doSomething();
+    private:
+        
 };
 
 //Yoshi
@@ -48,12 +96,20 @@ class Bowser: public Baddies{
 
 //squares - coin square, star square, directional square, bank square, event square, dropping square
 class Square: public Actor{
-    
+    public:
+    Square(StudentWorld* world, int imageID, int startX, int startY, int dir, double size): Actor(world, imageID, startX, startY, dir, 1, 1) {};
+    private:
 };
 
-//coin square
-class coinSquare: public Square{
-    
+//coin squares
+
+//do i need separate classes for blue and red coin squares???
+
+class blueCoinSquare: public Square{
+    public:
+        blueCoinSquare(StudentWorld* world, int startX, int startY): Square(world,IID_BLUE_COIN_SQUARE,SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 0, 1){};
+        virtual void doSomething();
+    private:
 };
 
 //star square
