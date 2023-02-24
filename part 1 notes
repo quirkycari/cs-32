@@ -17,3 +17,8 @@ ACTOR.CPP:
   9. A Player Avatar object starts with no Vortex projectile.
   10. A Player Avatar has a ticks_to_move value of 0.
   11. A Player Avatar starts out in the waiting to roll state. 
+
+
+PEACH:
+
+assuming peach is player 1
