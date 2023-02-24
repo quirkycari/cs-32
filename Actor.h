@@ -7,9 +7,11 @@
 
 class StudentWorld;
 
-
 //enumeration for roll states
 enum roll_or_walk{WAITING_TO_ROLL = 0, WALKING = 1};
+
+//player id
+enum playerNum{PEACH = 1, YOSHI = 2};
 
 //actor - derived from GraphObject
 class Actor: public GraphObject{
@@ -19,6 +21,8 @@ class Actor: public GraphObject{
         StudentWorld* getWorld() {
             return m_world;
         }
+        
+    virtual void doSomething() = 0;
     
     private:
         StudentWorld* m_world;
@@ -33,7 +37,7 @@ class Player_Avatar: public Actor{
         Player_Avatar(StudentWorld* world, int imageID, int startX, int startY, double size): Actor(world, imageID, startX, startY, 0, 0, 1), coins(0), state(WAITING_TO_ROLL) {};
         
         //doSomething
-        virtual void doSomething() = 0;
+        virtual void doSomething();
     
         //getter and setter for coins
         int getCoins(){return coins;};
@@ -55,6 +59,18 @@ class Player_Avatar: public Actor{
         int getTicks(){return ticks_to_move;};
         void setTicks(int newTicks){ticks_to_move = newTicks;};
     
+        //check for square in front
+        bool checkForSquare(int walkDir);
+    
+        //check for ability to move
+        bool canMove(int walkDir);
+    
+        //reset direction
+        void resetDir(int walkDir);
+        
+        //virtual getter
+        virtual int getPlayerNum() = 0;
+        
     private:
         int state;
         int walkDir = right;
@@ -68,9 +84,18 @@ class Player_Avatar: public Actor{
 //assume peach is player 1, use left side of keyboard --> wasd to move
 class Peach: public Player_Avatar{
     public:
-        Peach(StudentWorld* world, int startX, int startY): Player_Avatar(world, IID_PEACH, SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 1) {};
-        virtual void doSomething();
+    Peach(StudentWorld* world, int startX, int startY): Player_Avatar(world, IID_PEACH, SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 1),coins(0), grantedForThisTurn(false){};
+       // virtual void doSomething();
+        
+        virtual int getPlayerNum() {return playerNum;};
+    
+        bool granted(){return grantedForThisTurn;};
+        void setGranted(bool newGrant){grantedForThisTurn = newGrant;};
+
     private:
+        bool grantedForThisTurn;
+        int coins;
+        const int playerNum = PEACH;
         
 };
 
@@ -97,7 +122,7 @@ class Bowser: public Baddies{
 //squares - coin square, star square, directional square, bank square, event square, dropping square
 class Square: public Actor{
     public:
-    Square(StudentWorld* world, int imageID, int startX, int startY, int dir, double size): Actor(world, imageID, startX, startY, dir, 1, 1) {};
+        Square(StudentWorld* world, int imageID, int startX, int startY, int dir, double size): Actor(world, imageID, startX, startY, dir, 1, 1) {};
     private:
 };
 
@@ -107,9 +132,13 @@ class Square: public Actor{
 
 class blueCoinSquare: public Square{
     public:
-        blueCoinSquare(StudentWorld* world, int startX, int startY): Square(world,IID_BLUE_COIN_SQUARE,SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 0, 1){};
+        blueCoinSquare(StudentWorld* world, int startX, int startY): Square(world,IID_BLUE_COIN_SQUARE,SPRITE_WIDTH * startX, SPRITE_HEIGHT * startY, 0, 1), alive(true){};
         virtual void doSomething();
+        
+        bool isAlive(){return alive;};
+        void grantCoins(Player_Avatar* avatar){avatar->setCoins(avatar->getCoins() + 3);};
     private:
+        bool alive;
 };
 
 //star square
