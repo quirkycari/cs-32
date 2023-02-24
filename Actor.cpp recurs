@@ -1,0 +1,183 @@
+#include "Actor.h"
+#include "GameController.h"
+#include "StudentWorld.h"
+#include "Board.h"
+#include <list>
+// Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
+
+
+
+//helper function square
+
+bool Player_Avatar::checkForSquare(int walkDir){
+    int newX;
+    int newY;
+  //  int newDir;
+    
+    list<int> visitedDirections;
+   // visitedDirections.push_front(getWalkDir()+180);
+    
+    getPositionInThisDirection(getWalkDir(), 16, newX, newY);
+    
+    newX = newX / SPRITE_WIDTH;
+    newY = newY / SPRITE_HEIGHT;
+
+    Board::GridEntry ge = getWorld()->getBoard()->getContentsOf(newX,newY);
+    
+    if(ge == Board::empty){
+        //board is empty, push current walk direction onto list
+      //  visitedDirections.push_front(getWalkDir()+180);
+        visitedDirections.push_back(getWalkDir());
+        
+        cout << getWalkDir() << endl;
+        
+        setWalkDir(getWalkDir()+90);
+        if(getWalkDir()==360){
+            setWalkDir(right);
+        }
+        if(getWalkDir()==450){
+            setWalkDir(up);
+        }
+        if(getWalkDir()==540){
+            setWalkDir(left);
+        }
+        
+        if(getWalkDir() == (visitedDirections.back()+180)){
+         //   visitedDirections.push_front(getWalkDir());
+            setWalkDir(getWalkDir()+90);
+        }
+  //      if(getWalkDir() == visitedDirections.back()){
+    //        setWalkDir(getWalkDir()+180);
+      //  }
+        
+    //    if(getWalkDir()==up){
+    //        setWalkDir(up+90);
+    //        visitedDirections.push_front(90);
+   //     }
+   //     if(visitedDirections.back()==right){
+   //         setWalkDir(right+90);
+   //         visitedDirections.push_front(0);
+   //     }
+   //     if(visitedDirections.back()==down){
+   //         setWalkDir(down+90);
+   //         visitedDirections.push_front(270);
+    //    }
+    //    if(visitedDirections.back()==left){
+    //        setWalkDir(left +90);
+     //       visitedDirections.push_front(180);
+     //   }
+        
+        
+        
+        
+        cout << "not blue coin square" << endl;
+        return false;
+    }
+    
+    if(ge != Board::empty){
+        cout << "final dir: " << getWalkDir() << endl;
+        //can move forward in this direction
+        return true;
+    }
+    
+    if(checkForSquare(up)){
+        setWalkDir(up);
+        visitedDirections.clear();
+        return true;
+    }
+    if(checkForSquare(right)){
+        setWalkDir(right);
+        visitedDirections.clear();
+        return true;
+    }
+    if(checkForSquare(down)){
+        setWalkDir(down);
+        visitedDirections.clear();
+        return true;
+    }
+    if(checkForSquare(left)){
+        setWalkDir(left);
+        visitedDirections.clear();
+        return true;
+    }
+    
+    
+    return false;
+    
+    
+    
+}
+
+
+//player avatar doSomething
+
+void Player_Avatar::doSomething(){
+    int ch;
+    
+    //if player is in waiting to roll state
+    if(getState() == WAITING_TO_ROLL){
+        //only working for PEACH rn
+        //nvm maybe
+        ch = getWorld()->getAction(getPlayerNum());
+      //  cout << ch;
+            switch(ch){
+                case ACTION_ROLL: {
+                    setDieRoll((rand() % 10) + 1);
+                    setTicks(getDieRoll()*8);
+                    
+                    setState(WALKING);
+                    break;
+                }
+                default: {
+                    return;
+                    break;
+                }
+            }
+        }
+    
+    if(getState() == WALKING){
+        
+        
+
+           //         break;
+            //    case Board::blue_coin_square:
+             //       break;
+           // }
+        
+        //update avatar's direction by moving 90 counterclockwise
+
+        
+        
+        //if walkDir = left, change sprite dir to 180
+        //cout << "going here" << endl;
+        
+        if(getX() % 16 == 0 && getY() %16 == 0){
+            checkForSquare(getWalkDir());
+        }
+        
+        if(getWalkDir()==left){
+            setDirection(left);
+        }
+        else{
+            setDirection(right);
+        }
+        
+        //move 2 pixels in walk direction
+        moveAtAngle(getWalkDir(), 2);
+            
+        //decrement ticks_to_move by 1
+        setTicks(getTicks() - 1);
+       // cout << getTicks() << endl;
+        
+        //if ticks_to_move = 0, change state to walking
+        if(getTicks() == 0){
+            setState(WAITING_TO_ROLL);
+            cout << "break";
+        }
+}
+}
+
+void blueCoinSquare::doSomething(){
+    
+    //dummy function
+}
